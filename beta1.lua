@@ -1,6 +1,6 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
-    Name = "NasaHub | v1-beta.3", 
+    Name = "NasaHub | v1-beta.4", 
     LoadingTitle = "NasaHub: Instance Stresser",
     ConfigurationSaving = {Enabled = false}
 })
@@ -12,13 +12,13 @@ local Def = Window:CreateTab("Defense")
 local Speed, SPower = false, 50
 local Green, Flood = false, false
 local AntiContest, ACPower = false, 5 
-local LagIntensity = 15 -- New variable for lag power
+local LagIntensity = 15
 
 local LagFolder = Instance.new("Folder", workspace)
 LagFolder.Name = "NasaHub_Beta_Data"
 
 -- MAIN TAB
-Main:CreateSection("Movement & Utilities")
+Main:CreateSection("Movement")
 Main:CreateToggle({Name = "Master Walkspeed", Callback = function(v) Speed = v end})
 Main:CreateSlider({
     Name = "Speed Power", 
@@ -27,6 +27,13 @@ Main:CreateSlider({
     Increment = 1,
     Flag = "SpeedSlider",
     Callback = function(v) SPower = v end
+})
+
+Main:CreateSection("Combat Timing")
+Main:CreateToggle({
+    Name = "0.44s Auto-Green (Press E)", 
+    CurrentValue = false,
+    Callback = function(v) Green = v end
 })
 
 Main:CreateSection("Ghost Lag Switch")
@@ -56,6 +63,16 @@ Def:CreateSlider({
 -- SERVICES
 local UIS, VIM, RS = game:GetService("UserInputService"), game:GetService("VirtualInputManager"), game:GetService("RunService")
 
+-- AUTO-GREEN LOGIC
+UIS.InputBegan:Connect(function(input, processed)
+    if not processed and Green and input.KeyCode == Enum.KeyCode.E then 
+        -- Standard 0.44s delay for perfect "Green" timing
+        task.wait(0.44) 
+        -- VIM is used to bypass internal delay checks in most games
+        VIM:SendKeyEvent(false, Enum.KeyCode.E, false, game) 
+    end
+end)
+
 -- CLEANUP LOGIC
 UIS.InputEnded:Connect(function(i)
     if i.KeyCode == Enum.KeyCode.V then 
@@ -70,30 +87,23 @@ RS.Heartbeat:Connect(function()
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-    -- 1. Improved Walkspeed
+    -- 1. Walkspeed
     if Speed and char:FindFirstChild("Humanoid") and char.Humanoid.MoveDirection.Magnitude > 0 then 
         hrp.CFrame += char.Humanoid.MoveDirection * (SPower/100) 
     end
 
-    -- 2. GHOST LAG SWITCH (Optimized for 2026 Stressing)
+    -- 2. GHOST LAG SWITCH
     if Flood and UIS:IsKeyDown(Enum.KeyCode.V) then
         for i = 1, LagIntensity do
             local b = Instance.new("Part")
-            -- Use large, complex shapes to force lighting/physics updates
             b.Size = Vector3.new(50, 50, 50) 
             b.Position = hrp.Position + Vector3.new(math.random(-10,10), 0, math.random(-10,10))
-            
-            -- Make them invisible to you but heavy for the server
             b.Transparency = 1 
             b.CanCollide = true
             b.Anchored = false 
-            b.Massless = false
-            b.Material = Enum.Material.ForceField -- Expensive material for GPUs to render
-            
+            b.Material = Enum.Material.ForceField
             b.Parent = LagFolder
-            
-            -- Auto-delete blocks after 0.5 seconds to prevent YOU from crashing
-            game:GetService("Debris"):AddItem(b, 0.5)
+            game:GetService("Debris"):AddItem(b, 0.4) -- Slightly faster cleanup for stability
         end
     end
 
